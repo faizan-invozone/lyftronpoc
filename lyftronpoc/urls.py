@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('sqldialect.urls')),
     path('', include('databaseconnection.urls')),
+    path('', include('metadata.urls')),
 ]
 
 # urlpatterns = [
