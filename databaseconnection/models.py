@@ -3,8 +3,8 @@ from sqldialect.models import SqlDialect
 
 
 CONNECTION_TYPE = [
-    ('Source', 'source'),
-    ('Target', 'target'),
+    ('source', 'Source'),
+    ('target', 'Target'),
 ]
 class DatabaseConnecion(models.Model):
     name = models.CharField(max_length=100)
