@@ -6,15 +6,24 @@ class SqlDialect(models.Model):
     provider = models.CharField(max_length=100)
     credential = models.TextField()
 
+    def __str__(self):
+        return self.name
+
 
 class SourceDatatype(models.Model):
     name = models.CharField(max_length=100)
     source = models.ForeignKey(SqlDialect, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.name    
+
 
 class TargetDatatype(models.Model):
     name = models.CharField(max_length=100)
     target = models.ForeignKey(SqlDialect, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return self.name
 
 
 class DatatypeMapping(models.Model):

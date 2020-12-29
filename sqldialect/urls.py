@@ -10,5 +10,5 @@ router.register(r'target-datatypes', TargetDatatypeViewSet, basename='targetdata
 router.register(r'datatype-mappings', DatatypeMappingViewSet, basename='datatypemapping')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('api/v1/', include(router.urls)),
 ]
