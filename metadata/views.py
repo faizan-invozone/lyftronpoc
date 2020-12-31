@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from databaseconnection.models import Integration
 import json
+from utils.mysql_meta import mysql_meta_
 
 
 def get_mysql_credentials(sql_dialect, source):
@@ -17,9 +18,8 @@ def get_mysql_credentials(sql_dialect, source):
 
 def get_mysql_metadata(integration):
     host, port, user, password = get_mysql_credentials(integration.source.sql_dialect, integration.source)
-    a = 1
-    # your code will be here for fetching metadata
-    pass
+    metaData = mysql_meta_(host,port,user,password)  
+    return metaData
 
 class ListMetaData(APIView):
     
