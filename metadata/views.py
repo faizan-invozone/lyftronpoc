@@ -32,4 +32,4 @@ class ListMetaData(APIView):
             return Response(data={'error': 'Integration not found'})
         integration = integration[0]
         metadata = get_mysql_metadata(integration)
-        return Response(data={'data': 'integration found'})
+        return Response(data=metadata)

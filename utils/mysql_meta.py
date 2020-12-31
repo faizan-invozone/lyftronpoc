@@ -13,7 +13,7 @@ def mysql_meta_(host,port,user, password):
     # password = ''
 
     count = 0
-    with open(BASE_DIR + '/utils/config.json',"r") as json_file:
+    with open('config.json',"r") as json_file:
         data = json.load(json_file)
 
     data['host'] = host
@@ -22,7 +22,7 @@ def mysql_meta_(host,port,user, password):
     data['password'] = password
 
 
-    with open(BASE_DIR + '/utils/config.json', "w") as jsonFile:
+    with open('config.json', "w") as jsonFile:
         json.dump(data, jsonFile)
 
 
