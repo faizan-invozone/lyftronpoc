@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from databaseconnection.models import Integration
@@ -32,4 +33,6 @@ class ListMetaData(APIView):
             return Response(data={'error': 'Integration not found'})
         integration = integration[0]
         metadata = get_mysql_metadata(integration)
+        if not metadata:
+            return Response(data={'error': 'Something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(data=metadata)

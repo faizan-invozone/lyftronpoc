@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import DatabaseConnectionSerializer, IntegrationSerializer
 from .models import DatabaseConnecion, Integration
+import subprocess
+from utils.mysql_meta import test_mysql_connection
 
 
 class DatabaseConnectionViewSet(viewsets.ModelViewSet):
@@ -17,20 +19,19 @@ class IntegrationViewSet(viewsets.ModelViewSet):
     queryset = Integration.objects.all()
 
 
-def test_mysql_connection(params):
+def test_mysql_credentials(params):
     host = params.get('host', None)
     port = params.get('port', None)
     user = params.get('user', None)
     password = params.get('password', None)
-    # Farhan your code will be here.
-    # Please return true if connection succeeded else false 
-    return True
+    test = test_mysql_connection(host, port, user, password)
+    return test
 
 class TestConnection(APIView):
 
     def post(self, request, format=None):
         request_data = request.data
-        test = test_mysql_connection(request_data)
+        test = test_mysql_credentials(request_data)
         if not test:
             return Response(data={'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(data={'status': 'Success'}, status=status.HTTP_200_OK)
