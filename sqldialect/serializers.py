@@ -3,9 +3,11 @@ from .models import SqlDialect, SourceDatatype, TargetDatatype, DatatypeMapping
 
 
 class SqlDialectSerializer(serializers.ModelSerializer):
+    credential = serializers.JSONField()
+
     class Meta:
         model = SqlDialect
-        fields = '__all__'
+        fields = ['name', 'provider', 'credential']
 
 
 class SourceDatatypeSerializer(serializers.ModelSerializer):
