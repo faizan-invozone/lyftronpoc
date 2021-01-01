@@ -7,11 +7,14 @@ from .serializers import DatabaseConnectionSerializer, IntegrationSerializer
 from .models import DatabaseConnecion, Integration
 import subprocess
 from utils.mysql_meta import test_mysql_connection
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class DatabaseConnectionViewSet(viewsets.ModelViewSet):
     serializer_class = DatabaseConnectionSerializer
     queryset = DatabaseConnecion.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['connection_type']
 
 
 class IntegrationViewSet(viewsets.ModelViewSet):

@@ -3,9 +3,11 @@ from databaseconnection.models import DatabaseConnecion, Integration
 
 
 class DatabaseConnectionSerializer(serializers.ModelSerializer):
+    credential = serializers.JSONField()
     class Meta:
         model = DatabaseConnecion
-        fields = '__all__'
+        fields = ['name', 'sql_dialect', 'credential', 'connection_type']
+        lookup_field = 'connection_type'
 
 
 class IntegrationSerializer(serializers.ModelSerializer):
