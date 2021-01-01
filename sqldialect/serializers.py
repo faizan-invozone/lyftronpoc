@@ -17,7 +17,7 @@ class SqlDialectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SqlDialect
-        fields = ['name', 'provider', 'credential']
+        fields = ['id', 'name', 'provider', 'credential']
 
 
 class SourceDatatypeSerializer(serializers.ModelSerializer):

@@ -17,7 +17,7 @@ class DatabaseConnectionSerializer(serializers.ModelSerializer):
     credential = JSONSerializerField()
     class Meta:
         model = DatabaseConnecion
-        fields = ['name', 'sql_dialect', 'credential', 'connection_type']
+        fields = ['id', 'name', 'sql_dialect', 'credential', 'connection_type']
         lookup_field = 'connection_type'
 
 
