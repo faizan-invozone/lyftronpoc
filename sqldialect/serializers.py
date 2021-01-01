@@ -1,9 +1,19 @@
 from rest_framework import serializers
 from .models import SqlDialect, SourceDatatype, TargetDatatype, DatatypeMapping
+import json
+
+
+class JSONSerializerField(serializers.Field):
+
+    def to_internal_value(self, data):
+        return json.dumps(data)
+
+    def to_representation(self, value):
+        return json.loads(value)
 
 
 class SqlDialectSerializer(serializers.ModelSerializer):
-    credential = serializers.JSONField()
+    credential = JSONSerializerField()
 
     class Meta:
         model = SqlDialect
