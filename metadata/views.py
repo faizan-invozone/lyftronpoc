@@ -24,7 +24,7 @@ def get_mysql_metadata(integration):
 
 class ListMetaData(APIView):
     
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         integration_id = request.data.get('integration', None)
         if not integration_id:
             return Response(data={'error': 'Please provide integration ID'})
