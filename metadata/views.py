@@ -44,5 +44,5 @@ class ReplicateMetaData(APIView):
     def post(self, request, format=None):
         structure = request.data.get('structure')
         if not structure:
-            return Response(data={'error': 'Please provide Metadata structure.'}, status=status.HTTP_417_EXPECTATION_FAILED)
+            return Response(data={'error': 'Please provide Metadata structure.'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(data={'success': 'Successfully received structure'})
