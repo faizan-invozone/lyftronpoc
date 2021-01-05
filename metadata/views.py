@@ -19,8 +19,8 @@ def get_mysql_credentials(sql_dialect, source):
 
 def get_mysql_metadata(integration):
     host, port, user, password = get_mysql_credentials(integration.source.sql_dialect, integration.source)
-    metaData = mysql_meta_(host,port,user,password)  
-    return metaData
+    metadata = mysql_meta_(host,port,user,password)  
+    return metadata
 
 class ListMetaData(APIView):
     
@@ -36,3 +36,13 @@ class ListMetaData(APIView):
         if not metadata:
             return Response(data={'error': 'Something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(data=metadata)
+
+
+
+class ReplicateMetaData(APIView):
+
+    def post(self, request, format=None):
+        structure = request.data.get('structure')
+        if not structure:
+            return Response(data={'error': 'Please provide Metadata structure.'}, status=status.HTTP_417_EXPECTATION_FAILED)
+        return Response(data={'success': 'Successfully received structure'})
