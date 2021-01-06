@@ -39,13 +39,22 @@ class ListMetaData(APIView):
         return Response(data=metadata)
 
 
-def replicate_db_structure(integration):
+def replicate_db_structure(integration, structure):
     '''
         This function is being used for getting connection parameters and replication of db structure
         params:
             integration
     '''
-    pass
+    try:
+        target = json.loads(integration.destination)
+        host = target['host']
+        port = target['port']
+        user = target['user']
+        password = target['password']
+        replicate_to_target(host, port, user, password, structure)
+        return True
+    except Exception as e:
+        return False
 
 class ReplicateMetaData(APIView):
 
@@ -61,4 +70,8 @@ class ReplicateMetaData(APIView):
             return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         if not structure:
             return Response(data={'error': 'Please provide Metadata structure.'}, status=status.HTTP_400_BAD_REQUEST)
+        replication = replicate_db_structure(integration, structure)
+        if not replication:
+            return Response(data={'error': 'Something went wrong while replicating DB structure.'}, 
+            status=status.HTTP_400_BAD_REQUEST)
         return Response(data={'success': 'Successfully received structure with integration ' + integration.name})

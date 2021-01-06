@@ -1,21 +1,42 @@
 import psycopg2   # import psycopg module
 import json
 
+def create_posgtgresql_db(db_name, connection):
+    try:
+        cursor = connection.cursor()
+        #Preparing query to create a database
+        sql = '''CREATE database {0};'''.format(db_name)
+        #Creating a database
+        cursor.execute(sql)
+        print("Database created successfully........")
+        #Closing the connection
+        cursor.close()
+    except Exception as e:
+        return False
+
+
 def replicate_to_target(host, port, user, password, structure):    
     try:
         # connect to database
         con = psycopg2.connect(user = user,
                                     password = password,
                                     host = host,
-                                    port = port,
-                                    database = 'abc')
+                                    port = port)
+        
+        if len(structure['stream_data']) == 0:
+            return False
+        db_name = structure['stream_data'][0]['tap_stream_id'].split('-')[0]
+        db_created = create_posgtgresql_db(db_name, con)
+        if not db_created:
+            return False
+        
         cur = con.cursor()
         table_ = ""
 
         # with open("playJson.json","r") as json_file:
         #     data = json.load(json_file)
 
-        for t_ in structure:
+        for t_ in structure['stream_data']:
                 # print("")
                 # print("-----")
                 table_+="CREATE TABLE IF NOT EXISTS "+t_['table_name']+"( "
