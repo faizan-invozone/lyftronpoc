@@ -1,27 +1,28 @@
 import psycopg2   # import psycopg module
 import json
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 def create_posgtgresql_db(db_name, connection):
     try:
         cursor = connection.cursor()
         #Preparing query to create a database
-        sql = '''CREATE database {0};'''.format(db_name)
+        sql = '''CREATE DATABASE {0};'''.format(db_name)
         #Creating a database
         cursor.execute(sql)
         print("Database created successfully........")
         #Closing the connection
         cursor.close()
+        return True
     except Exception as e:
         return False
 
 
-def replicate_to_target(host, port, user, password, structure):    
+def replicate_to_target( host, port, user, password, structure):    
     try:
         # connect to database
-        con = psycopg2.connect(user = user,
-                                    password = password,
-                                    host = host,
-                                    port = port)
+        con = psycopg2.connect(user=user, password=password, host=host, port=port, dbname='invozoneposgresdb')
+        con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        print('creating DB...')
         
         if len(structure['stream_data']) == 0:
             return False
@@ -29,6 +30,8 @@ def replicate_to_target(host, port, user, password, structure):
         db_created = create_posgtgresql_db(db_name, con)
         if not db_created:
             return False
+        con.close()
+        con = psycopg2.connect(user=user, password=password, host=host, port=port, dbname=db_name)
         
         cur = con.cursor()
         table_ = ""

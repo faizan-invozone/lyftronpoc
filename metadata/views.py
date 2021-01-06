@@ -46,7 +46,7 @@ def replicate_db_structure(integration, structure):
             integration
     '''
     try:
-        target = json.loads(integration.destination)
+        target = json.loads(integration.destination.credential)
         host = target['host']
         port = target['port']
         user = target['user']
