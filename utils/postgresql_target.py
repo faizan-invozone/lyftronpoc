@@ -14,6 +14,8 @@ def create_posgtgresql_db(db_name, connection):
         cursor.close()
         return True
     except Exception as e:
+        if 'already exists' in str(e):
+            return True
         return False
 
 
@@ -42,19 +44,62 @@ def replicate_to_target( host, port, user, password, structure):
         for t_ in structure['stream_data']:
                 # print("")
                 # print("-----")
-                table_+="CREATE TABLE IF NOT EXISTS "+t_['table_name']+"( "
+                table_name = t_['table_name']
+                table_+="CREATE TABLE IF NOT EXISTS "+table_name+"( "
                 # print(t_['table_name'])
                 for key_t_m, t_m in t_["metadata"]["properties"].items():
                     # print("-")
+                    if 'user' == key_t_m:
+                        key_t_m = 'user_'
                     table_+=key_t_m
                     # print(key_t_m)
                     for key_d_, d_ in t_m.items():
+                        datatype = d_.lower()
+                        if 'enum' in datatype:
+                            try:
+                                cur.execute('CREATE TYPE {}_enum AS {};'.format(key_t_m, datatype))
+                            except Exception as e:
+                                if 'already exists' in str(e):
+                                    pass
+                                return False
+                            d_ = '{}_enum'.format(key_t_m)
+                        # if 'decimal' in datatype:
+                        #     d_ = 'decimal'
+                        if 'bigint' in datatype:
+                            d_ = 'bigint'
+                        if 'tinyint' in datatype:
+                            d_ = 'smallint'
+                        if 'mediumint' in datatype:
+                            d_ = 'integer'
+                        if 'double' in datatype:
+                            d_ = 'DOUBLE PRECISION'
+                        if 'float' in datatype:
+                            d_ = 'REAL'
+                        if 'longtext' in datatype:
+                            d_ = 'TEXT'
+                        if 'mediumtext' in datatype:
+                            d_ = 'TEXT'
+                        if 'blob' in datatype:
+                            d_ = 'BYTEA'
+                        if 'datetime' in datatype:
+                            d_ = 'timestamp'
+                        if 'int(' in datatype:
+                            d_ = 'int'
                         table_+=" "+d_
                         # print(d_)
                     table_+=","
                 table_+=" );"
                 table_ = table_.replace(", );"," );")
-                print(table_)        
+                print(table_)
+                # table_.replace('bigint(', '').replace('0')
+                # table_.replace('tinyint', 'smallint')
+                # table_.replace('mediumint', 'integer')
+                # table_.replace('unsigned', '')
+                # table_.replace('double', 'DOUBLE PRECISION')
+                # table_.replace('float', 'REAL')
+                # table_.replace('logntext', 'TEXT')
+                # table_.replace('mediumtext', 'TEXT')
+                # table_.replace('blob', 'BYTEA')
 
                 cur.execute(table_)
                     

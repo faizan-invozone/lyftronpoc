@@ -21,11 +21,13 @@ class VirtualTable(models.Model):
 class ViratualColumn(models.Model):
     name = models.CharField(max_length=500)
     actual_name = models.CharField(max_length=500)
-    length = models.CharField(max_length=20)
-    mapping = models.ForeignKey(DatatypeMapping, on_delete=models.CASCADE)
+    length = models.CharField(max_length=20, null=True, blank=True)
+    is_null = models.CharField(max_length=20, null=True, blank=True)
+    mapping = models.ForeignKey(DatatypeMapping, on_delete=models.CASCADE, null=True, blank=True)
     virtual_table = models.ForeignKey(VirtualTable, on_delete=models.CASCADE)
 
 
 class Pipeline(models.Model):
     name = models.CharField(max_length=500)
     pipeline_sql = models.TextField()
+    
