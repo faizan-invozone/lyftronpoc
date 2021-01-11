@@ -70,13 +70,25 @@ def replicate_db_structure(integration, structure):
         return False
     
 def fetch_source_data(structure, integration):
-    fetch_structure = json.loads(structure)
-    host, port, user, password = get_mysql_credentials(integration.source.sql_dialect, integration.source)
-    with open('data_properties.json', "w") as jsonFile:
-        json.dump(fetch_structure, jsonFile)
-    fetch_data_from_mysql(host, port, user, password)
-    host, port, user, password = get_postgresql_credentials(integration.destination.sql_dialect, integration.destination)
-    insert_data_into_target(host, port, user, password)
+    try:
+        fetch_structure = json.loads(structure)
+        host, port, user, password = get_mysql_credentials(integration.source.sql_dialect, integration.source)
+        with open('data_properties.json', "w") as jsonFile:
+            json.dump(fetch_structure, jsonFile)
+        fetch_data_from_mysql(host, port, user, password)
+        return True
+    except Exception as e:
+        print(str(e))
+        return False
+
+def insert_data_into_target(structure, integration):
+    try:
+        host, port, user, password = get_postgresql_credentials(integration.destination.sql_dialect, integration.destination)
+        insertion_status = insert_data_into_target(host, port, user, password)
+        return insertion_status
+    except Exception as e:
+        print(str(e))
+        return False
     
 
 
@@ -94,12 +106,31 @@ class ReplicateMetaData(APIView):
             return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         if not structure:
             return Response(data={'error': 'Please provide Metadata structure.'}, status=status.HTTP_400_BAD_REQUEST)
-        fetch_data_structure = request.data.get('structure2')
-        if not fetch_data_structure:
-            return Response(data={'error': 'Please provide second structure required for data fetching from source'}, status=status.HTTP_400_BAD_REQUEST)
         replication = replicate_db_structure(integration, structure)
         if not replication:
             return Response(data={'error': 'Something went wrong while replicating DB structure.'}, 
             status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'success': 'Structure has been replicated successfully.' + integration.name})
+
+
+class LoadDataIntoTarget(APIView):
+
+    def post(self, request, format=None):
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        fetch_data_structure = request.data.get('structure')
+        if not fetch_data_structure:
+            return Response(data={'error': 'Please provide second structure required for data fetching from source'}, status=status.HTTP_400_BAD_REQUEST)
         data = fetch_source_data(fetch_data_structure, integration)
-        return Response(data={'success': 'Successfully received structure with integration ' + integration.name})
+        if not data:
+            return Response(data={'error': 'Something went wrong while fetching data from source'}, status=status.HTTP_400_BAD_REQUEST)
+        data = insert_data_into_target(fetch_data_structure, integration)
+        if not data:
+            return Response(data={'error': 'Something went wrong while inserting data into target'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'success': 'Data has been inserted successfully into Target' + integration.name})

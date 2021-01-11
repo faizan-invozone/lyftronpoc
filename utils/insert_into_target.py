@@ -5,7 +5,10 @@ import json
 def table_data_arranged(arg):
     new_arg = []
     for arg_ in arg:
-        if arg_.isnumeric():
+        if isinstance(arg_,int):
+            arg_new = arg_
+            new_arg.append(arg_new)
+        elif arg_.isnumeric():
             arg_new = int(arg_)
             new_arg.append(arg_new)
         else:
@@ -68,14 +71,12 @@ def insert_data_into_target(host, port, user, password):
             connection.commit()
             count = cursor.rowcount
             print (count, "Record inserted successfully into mobile table")
-
+            return True
             # print("--")
-
-    
-
     except (Exception, psycopg2.Error) as error :
         if(connection):
             print("Failed to insert record into mobile table", error)
+        return False
 
     finally:
         #closing database connection.
