@@ -25,6 +25,8 @@ def replicate_to_target( host, port, user, password, structure):
         con = psycopg2.connect(user=user, password=password, host=host, port=port, dbname='invozoneposgresdb')
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         print('creating DB...')
+
+        structure = json.loads(structure)
         
         if len(structure['stream_data']) == 0:
             return False
@@ -91,16 +93,6 @@ def replicate_to_target( host, port, user, password, structure):
                 table_+=" );"
                 table_ = table_.replace(", );"," );")
                 print(table_)
-                # table_.replace('bigint(', '').replace('0')
-                # table_.replace('tinyint', 'smallint')
-                # table_.replace('mediumint', 'integer')
-                # table_.replace('unsigned', '')
-                # table_.replace('double', 'DOUBLE PRECISION')
-                # table_.replace('float', 'REAL')
-                # table_.replace('logntext', 'TEXT')
-                # table_.replace('mediumtext', 'TEXT')
-                # table_.replace('blob', 'BYTEA')
-
                 cur.execute(table_)
                     
                 con.commit()
