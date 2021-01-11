@@ -110,7 +110,7 @@ class ReplicateMetaData(APIView):
         if not replication:
             return Response(data={'error': 'Something went wrong while replicating DB structure.'}, 
             status=status.HTTP_400_BAD_REQUEST)
-        return Response(data={'success': 'Structure has been replicated successfully.' + integration.name})
+        return Response(data={'success': 'Structure has been replicated successfully.'}, status=status.HTTP_200_OK)
 
 
 class LoadDataIntoTarget(APIView):
@@ -133,4 +133,4 @@ class LoadDataIntoTarget(APIView):
         data = insert_data_into_target(fetch_data_structure, integration)
         if not data:
             return Response(data={'error': 'Something went wrong while inserting data into target'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(data={'success': 'Data has been inserted successfully into Target' + integration.name})
+        return Response(data={'success': 'Data has been inserted successfully into Target'}, status=status.HTTP_200_OK)
