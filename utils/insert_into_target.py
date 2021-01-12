@@ -26,7 +26,6 @@ def insert_data_into_postgres_target(host, port, user, password):
     with open('data_properties.json', "r") as jsonFile:
         file_data = json.load(jsonFile)
         database = file_data['streams'][0]['tap_stream_id'].split('-')[0]
-
     try:
         # connect to database
         connection = psycopg2.connect(user = user,
@@ -34,12 +33,7 @@ def insert_data_into_postgres_target(host, port, user, password):
                                     host = host,
                                     port = port,
                                     database = database)
-
         cursor = connection.cursor()
-
-    
-
-
         for a in ar_:
             # print(a)
             data = json.loads(a)
@@ -71,11 +65,15 @@ def insert_data_into_postgres_target(host, port, user, password):
             connection.commit()
             count = cursor.rowcount
             print (count, "Record inserted successfully into mobile table")
+            cursor.close()
+            connection.close()
             return True
             # print("--")
     except (Exception, psycopg2.Error) as error :
         if(connection):
             print("Failed to insert record into mobile table", error)
+            cursor.close()
+            connection.close()
         return False
 
     finally:

@@ -2,6 +2,15 @@ import psycopg2   # import psycopg module
 import json
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
+
+def test_postgresql_connection(host, port, user, password):
+    try:
+        con = psycopg2.connect(user=user, password=password, host=host, port=port, dbname='invozoneposgresdb')
+        con.close()
+        return True
+    except Exception as e:
+        return False
+
 def create_posgtgresql_db(db_name, connection):
     try:
         cursor = connection.cursor()

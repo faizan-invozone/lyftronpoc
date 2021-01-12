@@ -8,6 +8,7 @@ from .models import DatabaseConnecion, Integration
 import subprocess
 from utils.mysql_meta import test_mysql_connection
 from django_filters.rest_framework import DjangoFilterBackend
+from utils.postgresql_target import test_postgresql_connection
 
 
 class DatabaseConnectionViewSet(viewsets.ModelViewSet):
@@ -30,11 +31,24 @@ def test_mysql_credentials(params):
     test = test_mysql_connection(host, port, user, password)
     return test
 
+def test_postgresql_credentials(params):
+    host = params.get('host', None)
+    port = params.get('port', None)
+    user = params.get('user', None)
+    password = params.get('password', None)
+    test = test_postgresql_connection(host, port, user, password)
+    return test
+
 class TestConnection(APIView):
 
     def post(self, request, format=None):
         request_data = request.data
-        test = test_mysql_credentials(request_data)
+        test = None
+        password = request_data.get('user', None)
+        if password == 'asim':
+            test = test_postgresql_credentials(request_data)
+        else:
+            test = test_mysql_credentials(request_data)
         if not test:
             return Response(data={'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(data={'status': 'Success'}, status=status.HTTP_200_OK)

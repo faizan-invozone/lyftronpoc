@@ -38,7 +38,6 @@ def mysql_meta_(host,port,user, password):
     data['user'] = user
     data['password'] = password
 
-
     with open('config.json', "w") as jsonFile:
         json.dump(data, jsonFile)
 
@@ -55,6 +54,6 @@ def mysql_meta_(host,port,user, password):
                 pass
             with open('properties.json',"r") as json_properties:
                 data = json.load(json_properties)    
-            return data  
+            return data
     except:
         return False

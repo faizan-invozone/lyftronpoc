@@ -10,7 +10,6 @@ class JSONSerializerField(serializers.Field):
 
     def to_representation(self, value):
         return json.loads(value)
-        # return value
 
 
 class DatabaseConnectionSerializer(serializers.ModelSerializer):
