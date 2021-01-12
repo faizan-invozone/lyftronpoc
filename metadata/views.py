@@ -7,7 +7,7 @@ import json
 from utils.mysql_meta import mysql_meta_
 from utils.postgresql_target import replicate_to_target
 from utils.fetch_data import fetch_data_from_mysql
-from utils.insert_into_target import insert_data_into_target
+from utils.insert_into_target import insert_data_into_postgres_target
 
 
 def get_mysql_credentials(sql_dialect, source):
@@ -84,7 +84,7 @@ def fetch_source_data(structure, integration):
 def insert_data_into_target(structure, integration):
     try:
         host, port, user, password = get_postgresql_credentials(integration.destination.sql_dialect, integration.destination)
-        insertion_status = insert_data_into_target(host, port, user, password)
+        insertion_status = insert_data_into_postgres_target(host, port, user, password)
         return insertion_status
     except Exception as e:
         print(str(e))

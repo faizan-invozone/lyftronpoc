@@ -15,7 +15,7 @@ def table_data_arranged(arg):
             new_arg.append(arg_)
     return new_arg
 
-def insert_data_into_target(host, port, user, password):
+def insert_data_into_postgres_target(host, port, user, password):
     ar_ = []
     with open("database.json","r") as json_file:
             for d_ in json_file:
