@@ -173,5 +173,8 @@ class LoadAPIDataToTarget(APIView):
             return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         source_creds = json.loads(integration.source.credential)
         target_creds = json.loads(integration.destination.credential)
-        load_data_from_api(source_creds, target_creds)
+        data = load_data_from_api(source_creds, target_creds)
+        if not data:
+            return Response(data={'error': 'Something went wrong while replicating DB structure.'}, 
+            status=status.HTTP_400_BAD_REQUEST)
         return Response(data={'success': 'Data has been inserted successfully into Target'}, status=status.HTTP_200_OK)
