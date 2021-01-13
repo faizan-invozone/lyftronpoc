@@ -4,10 +4,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from databaseconnection.models import Integration
 import json
+import os
+import requests
 from utils.mysql_meta import mysql_meta_
 from utils.postgresql_target import replicate_to_target
 from utils.fetch_data import fetch_data_from_mysql
 from utils.insert_into_target import insert_data_into_postgres_target
+from utils.get_api_metadata import load_data_into_target_db
 
 
 def get_mysql_credentials(sql_dialect, source):
@@ -73,8 +76,11 @@ def fetch_source_data(structure, integration):
     try:
         fetch_structure = json.loads(structure)
         host, port, user, password = get_mysql_credentials(integration.source.sql_dialect, integration.source)
-        with open('data_properties.json', "w") as jsonFile:
-            json.dump(fetch_structure, jsonFile)
+        file_name = 'data_properties.json'
+        if os.path.isfile(file_name):
+            os.remove(file_name)
+        with open(file_name, 'w+') as json_file:
+            json.dump(fetch_structure, json_file)
         fetch_data_from_mysql(host, port, user, password)
         return True
     except Exception as e:
@@ -133,4 +139,39 @@ class LoadDataIntoTarget(APIView):
         data = insert_data_into_target(fetch_data_structure, integration)
         if not data:
             return Response(data={'error': 'Something went wrong while inserting data into target'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'success': 'Data has been inserted successfully into Target'}, status=status.HTTP_200_OK)
+
+
+def load_data_from_api(source_creds, target_creds):
+    endpoint = source_creds.get('endpoint')
+    if not endpoint:
+        return False
+    try:
+        custom_endpoint = endpoint.split('//')
+        custom_endpoint[0] = '{}//{}:{}@'.format(custom_endpoint[0], source_creds.get('username', ''), source_creds.get('password', ''))
+        custom_endpoint = ''.join(custom_endpoint)
+        res = requests.get(url=custom_endpoint)
+        res_data = json.loads(res.text)
+        if 'error' in res_data[0].keys():
+            return False
+        data = load_data_into_target_db(target_creds['host'], target_creds['port'], target_creds['user'], target_creds['password'], res_data)
+        return data
+    except Exception as e:
+        return False
+
+
+class LoadAPIDataToTarget(APIView):
+
+    def post(self, request, format=None):
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        source_creds = json.loads(integration.source.credential)
+        target_creds = json.loads(integration.destination.credential)
+        load_data_from_api(source_creds, target_creds)
         return Response(data={'success': 'Data has been inserted successfully into Target'}, status=status.HTTP_200_OK)

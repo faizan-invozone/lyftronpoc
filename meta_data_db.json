@@ -1,0 +1,14 @@
+{ 
+    "stream_data": [
+      {
+        "tap_stream_id": "postgres_mysql-company",
+        "table_name": "company",
+        "metadata": {
+          "properties": {
+          },
+          "type": "object"
+        }
+      }
+    ]
+  } 
+  
