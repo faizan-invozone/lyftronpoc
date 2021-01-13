@@ -25,7 +25,7 @@ def load_data_into_target_db(host, port, user, password, api_data):
                                     password = password,
                                     host = host,
                                     port = port,
-                                    database = "api")
+                                    database = "new_api_base_db")
         cur = con.cursor()
         table_ = ""
         seed(1)
