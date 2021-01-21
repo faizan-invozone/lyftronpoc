@@ -12,6 +12,8 @@ from utils.fetch_data import fetch_data_from_mysql
 from utils.insert_into_target import insert_data_into_postgres_target
 from utils.get_api_metadata import load_data_into_target_db
 from utils.postgresql_target import test_postgresql_connection
+from utils.tranf_elt import _do_transformation
+
 
 def get_mysql_credentials(sql_dialect, source):
     if sql_dialect.name.lower() == 'mysql':
@@ -202,6 +204,5 @@ class TransformData(APIView):
             test = test_postgresql_connection(creds['host'], creds['port'], creds['user'], creds['password'])
             if not test:
                 return Response(data={'error': 'Unable to establish connection with Target'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(data={'data': 'Everything seems OK'}, status=status.HTTP_200_OK)
-
-
+        data = _do_transformation(creds['host'], creds['port'], creds['user'], creds['password'], query)
+        return Response(data=data, status=status.HTTP_200_OK)
