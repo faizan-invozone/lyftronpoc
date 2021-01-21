@@ -11,7 +11,7 @@ from utils.postgresql_target import replicate_to_target
 from utils.fetch_data import fetch_data_from_mysql
 from utils.insert_into_target import insert_data_into_postgres_target
 from utils.get_api_metadata import load_data_into_target_db
-
+from utils.postgresql_target import test_postgresql_connection
 
 def get_mysql_credentials(sql_dialect, source):
     if sql_dialect.name.lower() == 'mysql':
@@ -178,3 +178,30 @@ class LoadAPIDataToTarget(APIView):
             return Response(data={'error': 'Something went wrong while replicating DB structure.'}, 
             status=status.HTTP_400_BAD_REQUEST)
         return Response(data={'success': 'Data has been inserted successfully into Target'}, status=status.HTTP_200_OK)
+
+class TransformData(APIView):
+
+    def post(self, request, format=None):
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        query = request.data.get('query', None)
+        if not query:
+            return Response(data={'error': 'There is not any query to execute'}, status=status.HTTP_400_BAD_REQUEST)
+        target_name = integration.destination.sql_dialect.name
+        creds = None
+        if target_name.lower() == 'mysql':
+            creds = json.loads(integration.destination.credential)
+        if target_name.lower() == 'postgresql':
+            creds = json.loads(integration.destination.credential)
+            test = test_postgresql_connection(creds['host'], creds['port'], creds['user'], creds['password'])
+            if not test:
+                return Response(data={'error': 'Unable to establish connection with Target'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'data': 'Everything seems OK'}, status=status.HTTP_200_OK)
+
+
