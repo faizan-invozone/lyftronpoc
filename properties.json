@@ -1,6 +1,103 @@
 {
   "streams": [
     {
+      "tap_stream_id": "D_new-user",
+      "table_name": "user",
+      "schema": {
+        "properties": {
+          "id": {
+            "inclusion": "automatic",
+            "minimum": -2147483648,
+            "maximum": 2147483647,
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "f_name": {
+            "inclusion": "available",
+            "maxLength": 255,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "l_name": {
+            "inclusion": "available",
+            "maxLength": 255,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "inclusion": "available",
+            "maxLength": 255,
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "stream": "user",
+      "metadata": [
+        {
+          "breadcrumb": [],
+          "metadata": {
+            "selected-by-default": false,
+            "database-name": "D_new",
+            "row-count": 2,
+            "is-view": false,
+            "table-key-properties": [
+              "id"
+            ]
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "id"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "int(11)"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "f_name"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "varchar(255)"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "l_name"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "varchar(255)"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "email"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "varchar(255)"
+          }
+        }
+      ]
+    },
+    {
       "tap_stream_id": "invozone_demo-wp_commentmeta",
       "table_name": "wp_commentmeta",
       "schema": {
@@ -24599,6 +24696,67 @@
           "metadata": {
             "selected-by-default": true,
             "sql-datatype": "bigint(20) unsigned"
+          }
+        }
+      ]
+    },
+    {
+      "tap_stream_id": "test-khuchb",
+      "table_name": "khuchb",
+      "schema": {
+        "properties": {
+          "id": {
+            "inclusion": "automatic",
+            "minimum": -2147483648,
+            "maximum": 2147483647,
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "name": {
+            "inclusion": "available",
+            "maxLength": 200,
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "stream": "khuchb",
+      "metadata": [
+        {
+          "breadcrumb": [],
+          "metadata": {
+            "selected-by-default": false,
+            "database-name": "test",
+            "row-count": 2,
+            "is-view": false,
+            "table-key-properties": [
+              "id"
+            ]
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "id"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "int(11)"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "name"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "varchar(200)"
           }
         }
       ]

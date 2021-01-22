@@ -13,6 +13,7 @@ from utils.insert_into_target import insert_data_into_postgres_target
 from utils.get_api_metadata import load_data_into_target_db
 from utils.postgresql_target import test_postgresql_connection
 from utils.tranf_elt import _do_transformation
+from metadata.models import VirtualDatabase, VirtualSchema, VirtualTable, ViratualColumn, VirtualColumnAttribute
 
 
 def get_mysql_credentials(sql_dialect, source):
@@ -98,7 +99,64 @@ def insert_data_into_target(structure, integration):
         print(str(e))
         return False
     
-
+def _store_metadata(structure, integration):
+    metadata = json.loads(structure)
+    metadata_dict = metadata.get('stream_data', None)
+    if not metadata_dict:
+        return False
+    db_name = None
+    virtual_database = None
+    virtual_schema = None
+    for metadata in metadata_dict:
+        db, table_name = metadata['tap_stream_id'].split('-')
+        if db_name != db:
+            db_name = db
+            virtual_database = VirtualDatabase.objects.filter(name=db_name, integration_id=integration.id)
+            if not virtual_database:
+                virtual_database = VirtualDatabase(name=db_name, integration_id=integration.id)
+                virtual_database.save()
+            else:
+                virtual_database = virtual_database[0]
+            schema_name = 'public'
+            virtual_schema = VirtualSchema.objects.filter(name=schema_name, virtual_database_id=virtual_database.id)
+            if not virtual_schema:
+                virtual_schema = VirtualSchema(name=schema_name, virtual_database_id=virtual_database.id)
+                virtual_schema.save()
+            else:
+                virtual_schema = virtual_schema[0]
+        if not virtual_schema:
+            continue
+        virtual_table = VirtualTable.objects.filter(name=table_name, virtual_schema_id=virtual_schema.id)
+        if not virtual_table:
+            virtual_table = VirtualTable(name=table_name, virtual_schema_id=virtual_schema.id)
+            virtual_table.save()
+        else:
+            virtual_table = virtual_table[0]
+        actual_meta = metadata.get('metadata', None)
+        if not actual_meta:
+            continue
+        properties = actual_meta.get('properties', None)
+        for column_name, column_attributes in properties.items():
+            virtual_column = ViratualColumn.objects.filter(name=column_name, virtual_table_id=virtual_table.id)
+            if not virtual_column:
+                virtual_column = ViratualColumn(name=column_name, virtual_table_id=virtual_table.id)
+                virtual_column.save()
+            else:
+                virtual_column = virtual_column[0]
+            for attribute_name, attribute_value in column_attributes.items():
+                virtual_column_attribute = VirtualColumnAttribute.objects.filter(
+                    name=attribute_name,
+                    value=attribute_value,
+                    virtual_column_id=virtual_column.id
+                )
+                if not virtual_column_attribute:
+                    virtual_column_attribute = VirtualColumnAttribute(
+                        name=attribute_name,
+                        value=attribute_value,
+                        virtual_column_id=virtual_column.id
+                    )
+                    virtual_column_attribute.save()
+    return True
 
 class ReplicateMetaData(APIView):
 
@@ -118,6 +176,7 @@ class ReplicateMetaData(APIView):
         if not replication:
             return Response(data={'error': 'Something went wrong while replicating DB structure.'}, 
             status=status.HTTP_400_BAD_REQUEST)
+        _store_metadata(structure, integration)
         return Response(data={'success': 'Structure has been replicated successfully.'}, status=status.HTTP_200_OK)
 
 
