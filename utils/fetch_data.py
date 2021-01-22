@@ -3,11 +3,15 @@ import subprocess
 import uuid
 from pathlib import Path
 import os
+from datetime import datetime
+
+
 
 
 BASE_DIR = str(Path(__file__).resolve().parent.parent)
 
 def fetch_data_from_mysql(host,port,user, password):
+    start_insertion_time = datetime.now()
     with open('config.json',"r") as json_file:
         data = json.load(json_file)
 
@@ -34,6 +38,7 @@ def fetch_data_from_mysql(host,port,user, password):
                 with open(file_name, 'w+') as json_file:
                     pass
                 s = subprocess.run("tap-mysql -c config.json --properties data_properties.json >>database.json",shell=True)
+                print(datetime.now() - start_insertion_time)
             except:
                 pass
     except Exception as e:

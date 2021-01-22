@@ -2,9 +2,9 @@ import psycopg2   # import psycopg module
 import json
 from datetime import datetime
 import psycopg2.extras
+import re
 
 
-start_datetime = datetime.now()
 def get_records_from_datafile():
     records = []
     with open("database.json","r") as json_file:
@@ -45,6 +45,7 @@ def table_data_arranged(arg):
 
 def insert_data_into_postgres_target(host, port, user, password):
     try:
+        start_datetime = datetime.now()
         records = get_records_from_datafile()
         tables_name = get_tables_name(records)
         database = None
@@ -74,6 +75,13 @@ def insert_data_into_postgres_target(host, port, user, password):
                         # print(table_name)
                         for ad_k , ad_data in data['record'].items():
                             # print(ad_k, ad_data)
+                            if type(ad_data) is str:
+                                check = True
+                                while (check):
+                                    if '\x00' in ad_data:
+                                        ad_data = re.sub(u'\x00', '', ad_data)
+                                    else:
+                                        check = False
                             table_column_data.append(ad_k)
                             table_data.append(ad_data)
                         # print(table_column_data)
