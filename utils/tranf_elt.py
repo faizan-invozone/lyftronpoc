@@ -17,9 +17,16 @@ def _do_transformation(host, port, user, password, query):
             cursor = connection.cursor()
             cursor.execute(query)
             try:
+                field_names = [i[0] for i in cursor.description]
                 count = cursor.fetchall()
+                records = []
+                for record in count:
+                    dict_record = {}
+                    for key, value in zip(field_names, record):
+                        dict_record[key] = value
+                    records.append(dict_record)
                 connection.close()
-                data = {'data': count}
+                data = {'data': records}
                 return data
             except:
                 connection.commit()
