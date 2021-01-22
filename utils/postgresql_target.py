@@ -90,6 +90,8 @@ def replicate_to_target( host, port, user, password, structure):
                             d_ = 'TEXT'
                         if 'mediumtext' in datatype:
                             d_ = 'TEXT'
+                        if 'tinytext' in datatype:
+                            d_ = 'TEXT'
                         if 'blob' in datatype:
                             d_ = 'BYTEA'
                         if 'datetime' in datatype:
