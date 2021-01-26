@@ -2,7 +2,7 @@ import psycopg2   # import psycopg module
 import json
 
 
-def _do_transformation(host, port, user, password, query):
+def _do_transformation(host, port, user, password, database, query):
 
     # Sql_vari = "Select * from wp_users"
 
@@ -12,7 +12,7 @@ def _do_transformation(host, port, user, password, query):
                                     password = password,
                                     host = host,
                                     port = port,
-                                    database = "Postgres_")
+                                    database = database)
         with connection.cursor() as cursor:
             cursor = connection.cursor()
             cursor.execute(query)

@@ -18,7 +18,7 @@ class VirtualTable(models.Model):
     virtual_schema = models.ForeignKey(VirtualSchema, on_delete=models.CASCADE)
 
 
-class ViratualColumn(models.Model):
+class VirtualColumn(models.Model):
     name = models.CharField(max_length=255, null=True, blank=True)
     # actual_name = models.CharField(max_length=500)
     # length = models.CharField(max_length=20, null=True, blank=True)
@@ -29,7 +29,7 @@ class ViratualColumn(models.Model):
 class VirtualColumnAttribute(models.Model):
     name = models.CharField(max_length=255, null=True, blank=True)
     value = models.CharField(max_length=255, null=True, blank=True)
-    virtual_column = models.ForeignKey(ViratualColumn, on_delete=models.CASCADE)
+    virtual_column = models.ForeignKey(VirtualColumn, on_delete=models.CASCADE)
 
 
 class Pipeline(models.Model):

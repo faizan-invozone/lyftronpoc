@@ -13,7 +13,10 @@ from utils.insert_into_target import insert_data_into_postgres_target
 from utils.get_api_metadata import load_data_into_target_db
 from utils.postgresql_target import test_postgresql_connection
 from utils.tranf_elt import _do_transformation
-from metadata.models import VirtualDatabase, VirtualSchema, VirtualTable, ViratualColumn, VirtualColumnAttribute
+from utils.CDC_elt import MYSQL_SETTINGS
+from utils.CDC_action import apply_cdc
+from metadata.models import VirtualDatabase, VirtualSchema, VirtualTable, VirtualColumn, VirtualColumnAttribute
+from multiprocessing import Process
 
 
 def get_mysql_credentials(sql_dialect, source):
@@ -179,6 +182,31 @@ class ReplicateMetaData(APIView):
         _store_metadata(structure, integration)
         return Response(data={'success': 'Structure has been replicated successfully.'}, status=status.HTTP_200_OK)
 
+def _overwrite_source_config(host, port, user, password):
+    file_name = 'config_source.json'
+    with open(file_name,"r") as json_file:
+        data = json.load(json_file)
+        data['host'] = host
+        data['port'] = port
+        data['user'] = user
+        data['password'] = password
+    with open(file_name, "w") as jsonFile:
+        json.dump(data, jsonFile)
+
+def _apply_CDC(integration):
+    host, port, user, password = get_mysql_credentials(integration.source.sql_dialect, integration.source)
+    _overwrite_source_config(host, port, user, password)
+    host, port, user, password = get_postgresql_credentials(integration.destination.sql_dialect, integration.destination)
+    virtual_db = VirtualDatabase.objects.filter(integration_id=integration.id)
+    if not virtual_db:
+        return False
+    virtual_db = virtual_db[0]
+    process = Process(
+        name='{}_process'.format(virtual_db), target=apply_cdc, 
+        args=(host, port, user, password, virtual_db.name)
+    )
+    process.start()
+    return True
 
 class LoadDataIntoTarget(APIView):
 
@@ -200,6 +228,7 @@ class LoadDataIntoTarget(APIView):
         data = insert_data_into_target(fetch_data_structure, integration)
         if not data:
             return Response(data={'error': 'Something went wrong while inserting data into target'}, status=status.HTTP_400_BAD_REQUEST)
+        _apply_CDC(integration)
         return Response(data={'success': 'Data has been inserted successfully into Target'}, status=status.HTTP_200_OK)
 
 
@@ -263,5 +292,41 @@ class TransformData(APIView):
             test = test_postgresql_connection(creds['host'], creds['port'], creds['user'], creds['password'])
             if not test:
                 return Response(data={'error': 'Unable to establish connection with Target'}, status=status.HTTP_400_BAD_REQUEST)
-        data = _do_transformation(creds['host'], creds['port'], creds['user'], creds['password'], query)
+        virtual_db = VirtualDatabase.objects.filter(integration_id=integration.id)
+        if not virtual_db:
+            return Response(data={'error': 'Database is not selected.'}, status=status.HTTP_400_BAD_REQUEST)
+        virtual_db = virtual_db[0]
+        print(creds['host'], creds['port'], creds['user'], creds['password'], virtual_db.name, query)
+        data = _do_transformation(creds['host'], creds['port'], creds['user'], creds['password'], virtual_db.name, query)
         return Response(data=data, status=status.HTTP_200_OK)
+
+
+class GetIntegrationMetaData(APIView):
+
+    def post(self, request, format=None):
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        data = []
+        databases = integration.virtualdatabase_set.all()
+        for database in databases:
+            res_data = {'database': database.name}
+            schemas = database.virtualschema_set.all()
+            for schema in schemas:
+                res_data['schema'] = schema.name
+                tables = schema.virtualtable_set.all()
+                res_data['table'] = []
+                for table in tables:
+                    res_table = {'name': table.name}
+                    columns = table.virtualcolumn_set.all()
+                    res_table['column'] = []
+                    for column in columns:
+                        res_table['column'].append({'name': column.name})
+                    res_data['table'].append(res_table)
+        return Response(data={'data': res_data}, status=status.HTTP_200_OK)
+        
