@@ -7,7 +7,7 @@ import json
 import os
 import requests
 from utils.mysql_meta import mysql_meta_
-from utils.postgresql_target import replicate_to_target
+from utils.postgresql_target import replicate_to_target, replicate_to_staging_and_target
 from utils.fetch_data import fetch_data_from_mysql
 from utils.insert_into_target import insert_data_into_postgres_target
 from utils.get_api_metadata import load_data_into_target_db
@@ -61,7 +61,7 @@ class ListMetaData(APIView):
         return Response(data=metadata)
 
 
-def replicate_db_structure(integration, structure):
+def replicate_db_structure(integration, structure, etl=None):
     '''
         This function is being used for getting connection parameters and replication of db structure
         params:
@@ -73,7 +73,10 @@ def replicate_db_structure(integration, structure):
         port = target['port']
         user = target['user']
         password = target['password']
-        replicate_to_target(host, port, user, password, structure)
+        if not etl:
+            replicate_to_target(host, port, user, password, structure)
+        else:
+            replicate_to_staging_and_target(host, port, user, password, structure)
         return True
     except Exception as e:
         return False
@@ -93,10 +96,10 @@ def fetch_source_data(structure, integration):
         print(str(e))
         return False
 
-def insert_data_into_target(structure, integration):
+def insert_data_into_target(structure, integration, etl=None):
     try:
         host, port, user, password = get_postgresql_credentials(integration.destination.sql_dialect, integration.destination)
-        insertion_status = insert_data_into_postgres_target(host, port, user, password)
+        insertion_status = insert_data_into_postgres_target(host, port, user, password, etl)
         return insertion_status
     except Exception as e:
         print(str(e))
@@ -329,4 +332,82 @@ class GetIntegrationMetaData(APIView):
                         res_table['column'].append({'name': column.name})
                     res_data['table'].append(res_table)
         return Response(data={'data': res_data}, status=status.HTTP_200_OK)
-        
+
+
+class TransformETLData(APIView):
+
+    def post(self, request, format=None):
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        query = request.data.get('query', None)
+        if not query:
+            return Response(data={'error': 'There is not any query to execute'}, status=status.HTTP_400_BAD_REQUEST)
+        target_name = integration.destination.sql_dialect.name
+        creds = None
+        if target_name.lower() == 'mysql':
+            creds = json.loads(integration.destination.credential)
+        if target_name.lower() == 'postgresql':
+            creds = json.loads(integration.destination.credential)
+            test = test_postgresql_connection(creds['host'], creds['port'], creds['user'], creds['password'])
+            if not test:
+                return Response(data={'error': 'Unable to establish connection with Target'}, status=status.HTTP_400_BAD_REQUEST)
+        virtual_db = VirtualDatabase.objects.filter(integration_id=integration.id)
+        if not virtual_db:
+            return Response(data={'error': 'Database is not selected.'}, status=status.HTTP_400_BAD_REQUEST)
+        virtual_db = virtual_db[0]
+        print(creds['host'], creds['port'], creds['user'], creds['password'], virtual_db.name, query)
+        data = _do_transformation(creds['host'], creds['port'], creds['user'], creds['password'], virtual_db.name, query)
+        return Response(data=data, status=status.HTTP_200_OK)
+
+
+class ReplicateMetaDataETL(APIView):
+
+    def post(self, request, format=None):
+        structure = request.data.get('structure')
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        if not structure:
+            return Response(data={'error': 'Please provide Metadata structure.'}, status=status.HTTP_400_BAD_REQUEST)
+        replication = replicate_db_structure(integration, structure)
+        if not replication:
+            return Response(data={'error': 'Something went wrong while replicating DB structure.'}, 
+            status=status.HTTP_400_BAD_REQUEST)
+        _store_metadata(structure, integration)
+        return Response(data={'success': 'Structure has been replicated successfully.'}, status=status.HTTP_200_OK)
+
+
+class LoadDataIntoStagingETL(APIView):
+
+    def post(self, request, format=None):
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        fetch_data_structure = request.data.get('structure')
+        if not fetch_data_structure:
+            return Response(data={'error': 'Please provide second structure required for data fetching from source'}, status=status.HTTP_400_BAD_REQUEST)
+        data = fetch_source_data(fetch_data_structure, integration)
+        if not data:
+            return Response(data={'error': 'Something went wrong while fetching data from source'}, status=status.HTTP_400_BAD_REQUEST)
+        data = insert_data_into_target(fetch_data_structure, integration, True)
+        if not data:
+            return Response(data={'error': 'Something went wrong while inserting data into target'}, status=status.HTTP_400_BAD_REQUEST)
+        _apply_CDC(integration)
+        return Response(data={'success': 'Data has been inserted successfully into Target'}, status=status.HTTP_200_OK)
+

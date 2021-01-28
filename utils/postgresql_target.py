@@ -28,7 +28,7 @@ def create_posgtgresql_db(db_name, connection):
         return False
 
 
-def replicate_to_target( host, port, user, password, structure):    
+def replicate_to_target( host, port, user, password, structure, staging=None):    
     try:
         # connect to database
         con = psycopg2.connect(user=user, password=password, host=host, port=port, dbname='invozoneposgresdb')
@@ -40,7 +40,11 @@ def replicate_to_target( host, port, user, password, structure):
         if len(structure['stream_data']) == 0:
             return False
         db_name = structure['stream_data'][0]['tap_stream_id'].split('-')[0]
-        db_created = create_posgtgresql_db(db_name, con)
+        if staging:
+            db_name = '{}_staging'.format(db_name)
+            db_created = create_posgtgresql_db(db_name, con)
+        else:
+            db_created = create_posgtgresql_db(db_name, con)
         if not db_created:
             return False
         con.close()
@@ -120,3 +124,13 @@ def replicate_to_target( host, port, user, password, structure):
                     cur.close()
                     con.close()
                     print("PostgreSQL connection is closed")
+
+
+def replicate_to_staging_and_target(host, port, user, password, structure):    
+    try:
+        replicate_to_target(host, port, user, password, structure, staging=True)
+        replicate_to_target(host, port, user, password, structure)
+        return True
+    except (Exception, psycopg2.Error) as error :
+        return False
+

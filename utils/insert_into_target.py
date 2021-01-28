@@ -43,7 +43,7 @@ def table_data_arranged(arg):
 
 # print(ar_)                
 
-def insert_data_into_postgres_target(host, port, user, password):
+def insert_data_into_postgres_target(host, port, user, password, etl=None):
     try:
         start_datetime = datetime.now()
         records = get_records_from_datafile()
@@ -54,6 +54,8 @@ def insert_data_into_postgres_target(host, port, user, password):
             database = file_data['streams'][0]['tap_stream_id'].split('-')[0]
         if not database:
             return False
+        if etl:
+            database = '{}_staging'.format(database)
         connection = psycopg2.connect(user = user,
                                     password = password,
                                     host = host,
