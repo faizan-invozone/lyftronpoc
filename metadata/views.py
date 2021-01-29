@@ -143,9 +143,9 @@ def _store_metadata(structure, integration):
             continue
         properties = actual_meta.get('properties', None)
         for column_name, column_attributes in properties.items():
-            virtual_column = ViratualColumn.objects.filter(name=column_name, virtual_table_id=virtual_table.id)
+            virtual_column = VirtualColumn.objects.filter(name=column_name, virtual_table_id=virtual_table.id)
             if not virtual_column:
-                virtual_column = ViratualColumn(name=column_name, virtual_table_id=virtual_table.id)
+                virtual_column = VirtualColumn(name=column_name, virtual_table_id=virtual_table.id)
                 virtual_column.save()
             else:
                 virtual_column = virtual_column[0]
@@ -380,7 +380,7 @@ class ReplicateMetaDataETL(APIView):
             return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         if not structure:
             return Response(data={'error': 'Please provide Metadata structure.'}, status=status.HTTP_400_BAD_REQUEST)
-        replication = replicate_db_structure(integration, structure)
+        replication = replicate_db_structure(integration, structure, True)
         if not replication:
             return Response(data={'error': 'Something went wrong while replicating DB structure.'}, 
             status=status.HTTP_400_BAD_REQUEST)
@@ -408,6 +408,42 @@ class LoadDataIntoStagingETL(APIView):
         data = insert_data_into_target(fetch_data_structure, integration, True)
         if not data:
             return Response(data={'error': 'Something went wrong while inserting data into target'}, status=status.HTTP_400_BAD_REQUEST)
-        _apply_CDC(integration)
+        # _apply_CDC(integration)
         return Response(data={'success': 'Data has been inserted successfully into Target'}, status=status.HTTP_200_OK)
 
+
+class TransformDataETL(APIView):
+
+    def post(self, request, format=None):
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        query = request.data.get('query', None)
+        if not query:
+            return Response(data={'error': 'There is not any query to execute'}, status=status.HTTP_400_BAD_REQUEST)
+        target_name = integration.destination.sql_dialect.name
+        creds = None
+        if target_name.lower() == 'mysql':
+            creds = json.loads(integration.destination.credential)
+        if target_name.lower() == 'postgresql':
+            creds = json.loads(integration.destination.credential)
+            test = test_postgresql_connection(creds['host'], creds['port'], creds['user'], creds['password'])
+            if not test:
+                return Response(data={'error': 'Unable to establish connection with Target'}, status=status.HTTP_400_BAD_REQUEST)
+        virtual_db = VirtualDatabase.objects.filter(integration_id=integration.id)
+        if not virtual_db:
+            return Response(data={'error': 'Database is not selected.'}, status=status.HTTP_400_BAD_REQUEST)
+        virtual_db = virtual_db[0]
+        print(creds['host'], creds['port'], creds['user'], creds['password'], virtual_db.name, query)
+        data = _do_transformation(creds['host'], creds['port'], creds['user'], creds['password'], virtual_db.name, query, True)
+        return Response(data=data, status=status.HTTP_200_OK)
+
+
+class LoadDataIntoTargetETL(APIView):
+    def post(self, request, format=None):
+        return Response(data={'data': 'Success'}, status=status.HTTP_200_OK)

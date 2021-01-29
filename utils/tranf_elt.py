@@ -2,17 +2,22 @@ import psycopg2   # import psycopg module
 import json
 
 
-def _do_transformation(host, port, user, password, database, query):
+def _do_transformation(host, port, user, password, database, query, etl=None):
 
     # Sql_vari = "Select * from wp_users"
 
     try:
         # connect to database
+        db = ''
+        if etl:
+            db = '{}_staging'.format(database)
+        else:
+            db = database
         connection = psycopg2.connect(user = user,
                                     password = password,
                                     host = host,
                                     port = port,
-                                    database = database)
+                                    database = db)
         with connection.cursor() as cursor:
             cursor = connection.cursor()
             cursor.execute(query)
