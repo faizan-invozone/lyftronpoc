@@ -17,6 +17,7 @@ from utils.CDC_elt import MYSQL_SETTINGS
 from utils.CDC_action import apply_cdc
 from metadata.models import VirtualDatabase, VirtualSchema, VirtualTable, VirtualColumn, VirtualColumnAttribute
 from multiprocessing import Process
+from utils.etl_transformation import insert_into_target_etl
 
 
 def get_mysql_credentials(sql_dialect, source):
@@ -446,4 +447,22 @@ class TransformDataETL(APIView):
 
 class LoadDataIntoTargetETL(APIView):
     def post(self, request, format=None):
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        query = request.data.get('query', None)
+        if not query:
+            return Response(data={'error': 'There is not any query to execute'}, status=status.HTTP_400_BAD_REQUEST)
+        creds = json.loads(integration.destination.credential)
+        virtual_db = VirtualDatabase.objects.filter(integration_id=integration.id)
+        if not virtual_db:
+            return Response(data={'error': 'Database is not selected.'}, status=status.HTTP_400_BAD_REQUEST)
+        virtual_db = virtual_db[0]
+        creds['database'] = virtual_db.name
+        insert_into_target_etl(creds, query)
         return Response(data={'data': 'Success'}, status=status.HTTP_200_OK)

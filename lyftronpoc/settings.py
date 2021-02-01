@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'sqldialect',
     'metadata',
     'databaseconnection',
+    'job',
+    'job_scheduler',
 ]
 
 MIDDLEWARE = [

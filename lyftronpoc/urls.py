@@ -26,6 +26,8 @@ urlpatterns = [
     path('', include('sqldialect.urls')),
     path('', include('databaseconnection.urls')),
     path('', include('metadata.urls')),
+    path('', include('job.urls')),
+    path('', include('job_scheduler.urls')),
 ]
 
 # urlpatterns = [
