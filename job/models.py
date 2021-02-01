@@ -5,3 +5,8 @@ class Job(models.Model):
     name = models.CharField(max_length=255, null=True, blank=True)
     integration = models.ForeignKey(Integration, on_delete=models.CASCADE, null=True, blank=True)
     job_action = models.TextField()
+
+
+class JobStagingTable(models.Model):
+    name = models.CharField(max_length=255, null=True, blank=True)
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, null=True, blank=True)
