@@ -18,6 +18,7 @@ from utils.CDC_action import apply_cdc
 from metadata.models import VirtualDatabase, VirtualSchema, VirtualTable, VirtualColumn, VirtualColumnAttribute
 from multiprocessing import Process
 from utils.etl_transformation import insert_into_target_etl
+from job.models import Job, JobStagingTable
 
 
 def get_mysql_credentials(sql_dialect, source):
@@ -186,7 +187,7 @@ class ReplicateMetaData(APIView):
         _store_metadata(structure, integration)
         return Response(data={'success': 'Structure has been replicated successfully.'}, status=status.HTTP_200_OK)
 
-def _overwrite_source_config(host, port, user, password):
+def _overwrite_source_config(host, port, user, password, integration_id=None):
     file_name = 'config_source.json'
     with open(file_name,"r") as json_file:
         data = json.load(json_file)
@@ -194,12 +195,14 @@ def _overwrite_source_config(host, port, user, password):
         data['port'] = port
         data['user'] = user
         data['password'] = password
+        if integration_id:
+            data['integration_id'] = integration_id
     with open(file_name, "w") as jsonFile:
         json.dump(data, jsonFile)
 
-def _apply_CDC(integration):
+def _apply_CDC(integration, etl=None):
     host, port, user, password = get_mysql_credentials(integration.source.sql_dialect, integration.source)
-    _overwrite_source_config(host, port, user, password)
+    _overwrite_source_config(host, port, user, password, integration.id)
     host, port, user, password = get_postgresql_credentials(integration.destination.sql_dialect, integration.destination)
     virtual_db = VirtualDatabase.objects.filter(integration_id=integration.id)
     if not virtual_db:
@@ -207,7 +210,7 @@ def _apply_CDC(integration):
     virtual_db = virtual_db[0]
     process = Process(
         name='{}_process'.format(virtual_db), target=apply_cdc, 
-        args=(host, port, user, password, virtual_db.name)
+        args=(host, port, user, password, virtual_db.name, etl)
     )
     process.start()
     return True
@@ -409,7 +412,7 @@ class LoadDataIntoStagingETL(APIView):
         data = insert_data_into_target(fetch_data_structure, integration, True)
         if not data:
             return Response(data={'error': 'Something went wrong while inserting data into target'}, status=status.HTTP_400_BAD_REQUEST)
-        # _apply_CDC(integration)
+        _apply_CDC(integration, True)
         return Response(data={'success': 'Data has been inserted successfully into Target'}, status=status.HTTP_200_OK)
 
 
@@ -466,3 +469,24 @@ class LoadDataIntoTargetETL(APIView):
         creds['database'] = virtual_db.name
         insert_into_target_etl(creds, query)
         return Response(data={'data': 'Success'}, status=status.HTTP_200_OK)
+
+
+class IntegrationActions(APIView):
+
+    def post(self, request, format=None):
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        table_name = request.data.get('table_name', None)
+        if not table_name:
+            return Response(data={'error': 'Please provide table name to complete the action'}, status=status.HTTP_400_BAD_REQUEST)
+        jobs = Job.objects.filter(integration_id=integration_id, jobstagingtable__name=table_name)
+        data = []
+        for job in jobs:
+            data.append({'job_action': job.job_action})
+        return Response(data={'data': data}, status=status.HTTP_200_OK)

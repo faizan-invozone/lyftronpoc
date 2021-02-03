@@ -11,9 +11,11 @@ class JobViewSet(viewsets.ModelViewSet):
     def create(self, request):
         job = super(JobViewSet, self).create(request)
         query = request.data.get('job_action', None)
-        table_names = query.split(" ")[-1:]
-        table_names = ''.join(x for x in table_names)
-        for table_name in table_names:
-            job_table = JobStagingTable(name=table_name, job_id=job.data['id'])
-            job_table.save()
+        table_name = query.split(" ")[-1:]
+        job_table = JobStagingTable(name=table_name[0], job_id=job.data['id'])
+        job_table.save()
+        # table_names = ''.join(x for x in table_names)
+        # for table_name in table_names:
+        #     job_table = JobStagingTable(name=table_name, job_id=job.data['id'])
+        #     job_table.save()
         return job

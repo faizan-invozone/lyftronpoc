@@ -6,7 +6,8 @@ import subprocess
 import re
 from pathlib import Path
 from utils.CDC_elt import MYSQL_SETTINGS
-
+import requests
+from ast import literal_eval
 
 BASE_DIR = str(Path(__file__).resolve().parent.parent)
 
@@ -60,14 +61,33 @@ def type_map(value):
     tab = tab[1::] 
     tab = tab.strip()        
     return tab
-def apply_cdc(host, port, user, password, database):
+
+def get_job_actions(table_name):
+    file_name = 'config_source.json'
+    new_table_name = table_name.replace('\n', '')
+    with open(file_name,"r") as json_file:
+        data = json.load(json_file)
+        integration_id = data.get('integration_id', None)
+        if integration_id:
+            data = {'integration': integration_id, 'table_name': new_table_name}
+            res = requests.post('http://localhost:8000/api/v1/integration-actions', data=data)
+            res_data = json.loads(res.text)
+            return res_data
+    return False
+
+def apply_cdc(host, port, user, password, database, etl=None):
     try:
         # connect to database
+        db_name = ''
+        if etl:
+            db_name = '{}_staging'.format(database)
+        else:
+            db_name = database
         connection = psycopg2.connect(user = user,
                                     password = password,
                                     host = host,
                                     port = port,
-                                    database = database)
+                                    database = db_name)
 
         cursor = connection.cursor()
         print('MySQL settings are:')
@@ -97,6 +117,7 @@ def apply_cdc(host, port, user, password, database):
         data_post_en = False
 
         print("start")
+        checked = False
         while proc.poll() is None:
             output = proc.stdout.readline()
             data = output.decode("utf-8")
@@ -179,6 +200,9 @@ def apply_cdc(host, port, user, password, database):
                         data_post_en = True
                     elif data_post_en == True:
                         print(update_final_string)
+                        job_actions = get_job_actions(Update_data_t[1])
+                        if job_actions:
+                            pass
                         update_final_string = update_final_string[:-1]
                         U_DATA = "Update "+ Update_data_t[1] +" set "+update_final_string +" where "+ Update_q_key[0]+" ="+Update_q_value[0]
                         U_DATA = U_DATA.replace("\n","")
@@ -202,6 +226,9 @@ def apply_cdc(host, port, user, password, database):
                         Write_q_value += ","+ type_write
                         data_post_en = True
                     elif data_post_en == True:
+                        job_actions = get_job_actions(Write_data_t[1])
+                        if job_actions:
+                            pass
                         Write_q_key = Write_q_key[1::].replace("\n","")
                         Write_q_value = Write_q_value[1::].replace("\n","")
                         W_DATA = "INSERT INTO " +Write_data_t[1]+ " (" + Write_q_key + ") VALUES ("+Write_q_value+");"
@@ -230,6 +257,7 @@ def apply_cdc(host, port, user, password, database):
                         cursor.execute(D_DATA)
                         connection.commit()
                         data_post_en = False
+        checked = False
 
     
     except (Exception, psycopg2.Error) as error :
