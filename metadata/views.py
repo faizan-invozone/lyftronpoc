@@ -19,6 +19,7 @@ from metadata.models import VirtualDatabase, VirtualSchema, VirtualTable, Virtua
 from multiprocessing import Process
 from utils.etl_transformation import insert_into_target_etl
 from job.models import Job, JobStagingTable
+from django.http import FileResponse
 
 
 def get_mysql_credentials(sql_dialect, source):
@@ -490,3 +491,12 @@ class IntegrationActions(APIView):
         for job in jobs:
             data.append({'job_action': job.job_action})
         return Response(data={'data': data}, status=status.HTTP_200_OK)
+
+
+class PythonCLITransformation(APIView):
+
+    def post(self, request, format=None):
+        # with open('transformation/transformation_cover.py', 'rb') as trans_file:
+        #     return FileResponse(trans_file, as_attachment=True, filename='transformation_cover.py')
+        trans_file = open('transformation/transformation_cover.py', 'rb')
+        return FileResponse(trans_file, as_attachment=True, filename='transformation_cover.py')

@@ -2,7 +2,8 @@ from django.urls import path, include
 from .views import ListMetaData, ReplicateMetaData,\
      LoadDataIntoTarget, LoadAPIDataToTarget, TransformData, \
         GetIntegrationMetaData, ReplicateMetaDataETL, LoadDataIntoStagingETL, \
-            TransformDataETL, LoadDataIntoTargetETL, IntegrationActions
+            TransformDataETL, LoadDataIntoTargetETL, IntegrationActions, \
+                PythonCLITransformation
 
 
 
@@ -18,4 +19,5 @@ urlpatterns = [
     path('api/v1/integration-metadata', GetIntegrationMetaData.as_view()),
     path('api/v1/load-data-target-etl', LoadDataIntoTargetETL.as_view()),
     path('api/v1/integration-actions', IntegrationActions.as_view()),
+    path('api/v1/get-transformation-file', PythonCLITransformation.as_view())
 ]

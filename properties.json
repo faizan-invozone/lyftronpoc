@@ -49,7 +49,7 @@
           "metadata": {
             "selected-by-default": false,
             "database-name": "demo_etl",
-            "row-count": 198,
+            "row-count": 199,
             "is-view": false,
             "table-key-properties": [
               "meta_id"
@@ -4450,6 +4450,121 @@
           "metadata": {
             "selected-by-default": true,
             "sql-datatype": "varchar(40)"
+          }
+        }
+      ]
+    },
+    {
+      "tap_stream_id": "mydb-links",
+      "table_name": "links",
+      "schema": {
+        "properties": {
+          "id": {
+            "inclusion": "automatic",
+            "minimum": 0,
+            "maximum": 18446744073709551615,
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "url": {
+            "inclusion": "available",
+            "maxLength": 255,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "inclusion": "available",
+            "maxLength": 255,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "inclusion": "available",
+            "maxLength": 255,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "last_update": {
+            "inclusion": "available",
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "stream": "links",
+      "metadata": [
+        {
+          "breadcrumb": [],
+          "metadata": {
+            "selected-by-default": false,
+            "database-name": "mydb",
+            "row-count": 39,
+            "is-view": false,
+            "table-key-properties": [
+              "id"
+            ]
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "id"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "bigint(20) unsigned"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "url"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "varchar(255)"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "name"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "varchar(255)"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "description"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "varchar(255)"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "last_update"
+          ],
+          "metadata": {
+            "selected-by-default": true,
+            "sql-datatype": "date"
           }
         }
       ]
@@ -29223,7 +29338,7 @@
           "metadata": {
             "selected-by-default": false,
             "database-name": "testing_etl",
-            "row-count": 195,
+            "row-count": 199,
             "is-view": false,
             "table-key-properties": [
               "meta_id"

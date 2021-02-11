@@ -200,9 +200,7 @@ def apply_cdc(host, port, user, password, database, etl=None):
                         data_post_en = True
                     elif data_post_en == True:
                         print(update_final_string)
-                        job_actions = get_job_actions(Update_data_t[1])
-                        if job_actions:
-                            pass
+                        
                         update_final_string = update_final_string[:-1]
                         U_DATA = "Update "+ Update_data_t[1] +" set "+update_final_string +" where "+ Update_q_key[0]+" ="+Update_q_value[0]
                         U_DATA = U_DATA.replace("\n","")
@@ -210,6 +208,18 @@ def apply_cdc(host, port, user, password, database, etl=None):
                         cursor.execute(U_DATA)
                         connection.commit()
                         data_post_en = False
+                        # job_actions = get_job_actions(Update_data_t[1])
+                        # jobs = job_actions.get('data', None)
+                        # for job in jobs:
+                        #     query = job.get('job_action', None)
+                        #     if Update_data_t[1] in query:
+                        #         if Update_data[1] in query:
+
+                        #             #will go to the stage with the id and table name..
+                        #             #have to call the transformation code with the given query and get the data with given id then dump it into target
+                        # cursor.execute()
+                        # if job_actions:
+                        #     print(job_actions)
 
                 elif Default == True and Write == True:
                     if "Table" in data:
@@ -228,7 +238,7 @@ def apply_cdc(host, port, user, password, database, etl=None):
                     elif data_post_en == True:
                         job_actions = get_job_actions(Write_data_t[1])
                         if job_actions:
-                            pass
+                            print(job_actions)
                         Write_q_key = Write_q_key[1::].replace("\n","")
                         Write_q_value = Write_q_value[1::].replace("\n","")
                         W_DATA = "INSERT INTO " +Write_data_t[1]+ " (" + Write_q_key + ") VALUES ("+Write_q_value+");"
