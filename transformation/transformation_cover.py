@@ -9,9 +9,9 @@ record = Recod()
 
 ### Read Operation ###
 
-# results = record.read('wp_commentmeta', limit=10, where={'meta_id': 1001})
-# for result in results:
-#     print(result)
+results = record.read('wp_commentmeta', limit=10)
+for result in results:
+    print(result)
 
 
 ### Update Operation ###
@@ -22,5 +22,5 @@ record = Recod()
 
 ### delete operation ###
 
-delete_results = record.delete('wp_commentmeta', where={'meta_id': 1001})
-print(delete_results)
+# delete_results = record.delete('wp_commentmeta', where={'meta_id': 1001})
+# print(delete_results)

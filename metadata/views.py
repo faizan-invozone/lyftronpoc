@@ -20,6 +20,7 @@ from multiprocessing import Process
 from utils.etl_transformation import insert_into_target_etl
 from job.models import Job, JobStagingTable
 from django.http import FileResponse
+from rest_framework.parsers import MultiPartParser
 
 
 def get_mysql_credentials(sql_dialect, source):
@@ -496,7 +497,40 @@ class IntegrationActions(APIView):
 class PythonCLITransformation(APIView):
 
     def post(self, request, format=None):
-        # with open('transformation/transformation_cover.py', 'rb') as trans_file:
-        #     return FileResponse(trans_file, as_attachment=True, filename='transformation_cover.py')
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        creds = json.loads(integration.destination.credential)
+        virtual_database = VirtualDatabase.objects.filter(integration_id=integration.id)
+        if not virtual_database:
+            return Response(data={'error': 'Database info not stored.'}, status=status.HTTP_400_BAD_REQUEST)
+        virtual_database = virtual_database[0]
+        creds['database'] = virtual_database.name
+        file_name = 'config_target.json'
+        if os.path.isfile(file_name):
+            os.remove(file_name)
+        with open(file_name, 'w+') as json_file:
+            json.dump(creds, json_file)
         trans_file = open('transformation/transformation_cover.py', 'rb')
         return FileResponse(trans_file, as_attachment=True, filename='transformation_cover.py')
+
+
+class FileUploadTransformationCLIView(APIView):
+    parser_classes = (MultiPartParser, )
+
+    def post(self, request, format=None):
+        up_file = request.FILES['file']
+        destination = open('transformation/' + up_file.name, 'wb+')
+        for chunk in up_file.chunks():
+            destination.write(chunk)
+        destination.close()
+
+        # ...
+        # transofrmation file received from user will be executed here..
+        # ...
+        return Response(up_file.name, status.HTTP_201_CREATED)

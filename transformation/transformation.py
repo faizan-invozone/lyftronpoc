@@ -5,22 +5,22 @@ import psycopg2
 class Recod():
     __creds = None
     def __init__(self):
-        with open('config.json',"r") as json_file:
+        with open('config_target.json',"r") as json_file:
             self.__creds = json.load(json_file)
         # print(self.__creds)
     
     def __connect(self):
         try:
-            # user = self.__creds.get('user', None)
-            # password = self.__creds.get('password', None)
-            # host = self.__creds.get('host', None)
-            # port = self.__creds.get('port', None)
-            # database = self.__creds.get('database', None)
-            host = '18.210.27.21'
-            port = '5432'
-            user = 'asim'
-            password = 'DevOpsAtInvozone1982'
-            database = 'poc_demo'
+            user = self.__creds.get('user', None)
+            password = self.__creds.get('password', None)
+            host = self.__creds.get('host', None)
+            port = self.__creds.get('port', None)
+            database = self.__creds.get('database', None)
+            # host = '18.210.27.21'
+            # port = '5432'
+            # user = 'asim'
+            # password = 'DevOpsAtInvozone1982'
+            # database = 'poc_demo'
             connection = psycopg2.connect(user=user, password=password, host=host, port=port, database=database)
             return connection
         except Exception as e:
