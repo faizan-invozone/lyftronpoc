@@ -1,5 +1,6 @@
 import json
 import psycopg2
+import pickle
 
 
 class Recod():
@@ -51,6 +52,8 @@ class Recod():
                         records.append(dict_record)
                     connection.close()
                     data = records
+                    with open('results.p', 'wb') as f:
+                        pickle.dump(data, f)
                     return data
                 except Exception as e:
                     print(e)
@@ -107,6 +110,8 @@ class Recod():
                     if count == -1 or count > 0:
                         data = {'data': '{} record(s) has been modified '.format(count)}
                         connection.close()
+                        with open('results.p', 'wb') as f:
+                            pickle.dump(data, f)
                         return data
         except Exception as e:
             print(e)
@@ -146,6 +151,8 @@ class Recod():
                     if count == -1 or count > 0:
                         data = {'data': '{} record(s) has been modified '.format(count)}
                         connection.close()
+                        with open('results.p', 'wb') as f:
+                            pickle.dump(data, f)
                         return data
         except Exception as e:
             print(e)
@@ -192,6 +199,8 @@ class Recod():
                     if count == -1 or count > 0:
                         data = {'data': '{} record(s) has been modified '.format(1 if count == -1 else count)}
                         connection.close()
+                        with open('results.p', 'wb') as f:
+                            pickle.dump(data, f)
                         return data
         except Exception as e:
             print(e)

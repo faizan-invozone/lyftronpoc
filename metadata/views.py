@@ -21,6 +21,8 @@ from utils.etl_transformation import insert_into_target_etl
 from job.models import Job, JobStagingTable
 from django.http import FileResponse
 from rest_framework.parsers import MultiPartParser
+import codecs
+import pickle
 
 
 def get_mysql_credentials(sql_dialect, source):
@@ -521,16 +523,26 @@ class PythonCLITransformation(APIView):
 
 
 class FileUploadTransformationCLIView(APIView):
-    parser_classes = (MultiPartParser, )
+    # parser_classes = (MultiPartParser, )
 
     def post(self, request, format=None):
-        up_file = request.FILES['file']
-        destination = open('transformation/' + up_file.name, 'wb+')
-        for chunk in up_file.chunks():
-            destination.write(chunk)
-        destination.close()
-
+        data = request.data.get('file', None)
+        if not data:
+            return Response(data={'error': 'data not found'})
+        # up_file = request.FILES['file']
+        new_data = codecs.getdecoder("unicode_escape")(data)[0]
+        file_name = 'transformation/testing.py'
+        if os.path.isfile(file_name):
+            os.remove(file_name)
+        with open(file_name, 'w+') as py_file:
+            py_file.writelines(new_data)
+        val = os.system('python3 transformation/testing.py')
+        results = None
+        with open('results.p', 'rb') as f:
+            results = pickle.load(f)
+        if not results:
+            return Response(data={'error': 'data not found'})
         # ...
         # transofrmation file received from user will be executed here..
         # ...
-        return Response(up_file.name, status.HTTP_201_CREATED)
+        return Response(results, status.HTTP_201_CREATED)
