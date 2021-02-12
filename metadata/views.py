@@ -528,7 +528,7 @@ class FileUploadTransformationCLIView(APIView):
     def post(self, request, format=None):
         data = request.data.get('file', None)
         if not data:
-            return Response(data={'error': 'data not found'})
+            return Response(data={'error': 'data not found'}, status=status.HTTP_400_BAD_REQUEST)
         # up_file = request.FILES['file']
         new_data = codecs.getdecoder("unicode_escape")(data)[0]
         file_name = 'transformation/testing.py'
@@ -541,7 +541,7 @@ class FileUploadTransformationCLIView(APIView):
         with open('results.p', 'rb') as f:
             results = pickle.load(f)
         if not results:
-            return Response(data={'error': 'data not found'})
+            return Response(data={'data': 'data not found'})
         # ...
         # transofrmation file received from user will be executed here..
         # ...
