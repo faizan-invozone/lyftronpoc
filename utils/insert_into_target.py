@@ -56,6 +56,7 @@ def insert_data_into_postgres_target(host, port, user, password, etl=None):
             return False
         if etl:
             database = '{}_staging'.format(database)
+        connection = None
         connection = psycopg2.connect(user = user,
                                     password = password,
                                     host = host,

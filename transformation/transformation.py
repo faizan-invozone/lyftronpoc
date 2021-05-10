@@ -17,6 +17,7 @@ class Recod():
             host = self.__creds.get('host', None)
             port = self.__creds.get('port', None)
             database = self.__creds.get('database', None)
+            
             # host = '18.210.27.21'
             # port = '5432'
             # user = 'asim'

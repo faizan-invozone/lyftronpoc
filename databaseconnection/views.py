@@ -67,8 +67,8 @@ class TestConnection(APIView):
         endpoint = request_data.get('endpoint', None)
         if endpoint:
             test = test_api(request_data)
-        password = request_data.get('user', None)
-        if password == 'asim':
+        dbuser = request_data.get('user', None)
+        if dbuser in ['asim', 'faizan']:
             test = test_postgresql_credentials(request_data)
         elif not endpoint:
             test = test_mysql_credentials(request_data)

@@ -5,7 +5,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 def test_postgresql_connection(host, port, user, password):
     try:
-        con = psycopg2.connect(user=user, password=password, host=host, port=port, dbname='invozoneposgresdb')
+        con = psycopg2.connect(user=user, password=password, host=host, port=port, dbname='lyftrondata')
         con.close()
         return True
     except Exception as e:
@@ -31,7 +31,7 @@ def create_posgtgresql_db(db_name, connection):
 def replicate_to_target( host, port, user, password, structure, staging=None):    
     try:
         # connect to database
-        con = psycopg2.connect(user=user, password=password, host=host, port=port, dbname='invozoneposgresdb')
+        con = psycopg2.connect(user=user, password=password, host=host, port=port, dbname='lyftrondata')
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         print('creating DB...')
 

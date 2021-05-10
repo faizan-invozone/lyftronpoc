@@ -526,6 +526,25 @@ class FileUploadTransformationCLIView(APIView):
     # parser_classes = (MultiPartParser, )
 
     def post(self, request, format=None):
+        integration_id = request.data.get('integration')
+        if not integration_id:
+            return Response(data={'error': 'Please provide integration'}, status=status.HTTP_400_BAD_REQUEST)
+        integration = None
+        try:
+            integration = Integration.objects.get(pk=integration_id)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        creds = json.loads(integration.destination.credential)
+        virtual_database = VirtualDatabase.objects.filter(integration_id=integration.id)
+        if not virtual_database:
+            return Response(data={'error': 'Database info not stored.'}, status=status.HTTP_400_BAD_REQUEST)
+        virtual_database = virtual_database[0]
+        creds['database'] = '{}_staging'.format(virtual_database.name)
+        file_name = 'config_target.json'
+        if os.path.isfile(file_name):
+            os.remove(file_name)
+        with open(file_name, 'w+') as json_file:
+            json.dump(creds, json_file)
         data = request.data.get('file', None)
         if not data:
             return Response(data={'error': 'data not found'}, status=status.HTTP_400_BAD_REQUEST)
